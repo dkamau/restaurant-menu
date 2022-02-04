@@ -1,0 +1,74 @@
+﻿@page "/"
+@inject HttpClient Http
+
+<h3>Restaurant, Menu!</h3>
+<h5>What would you like? </h5>
+
+<div class="row">
+    @foreach (var item in menuItems)
+    {
+        <div class="checkbox">
+            <label><input type="checkbox" value="" @onclick="() => Check(item.Name)"> @item.Name</label>
+        </div>
+        <div style="display:@(item.Checked ? "block" : "none")">
+            @foreach (var choice in item.Choices)
+            {
+                <div class="checkbox sub-menu">
+                    <label><input type="checkbox" value=""> @choice.Name</label>
+                </div>
+            }
+            @if (item.Related.Count > 0)
+            {
+                <span class="sub-menu pt-2 pb-2"><b>You might also want:</b></span>
+
+                @foreach (var relatedItem in item.Related)
+                {
+                    <div class="checkbox sub-menu">
+                        <label><input type="checkbox" value="" @onclick="() => CheckRelatedItem(item.Name, relatedItem.Name)"> @relatedItem.Name</label>
+                    </div>
+                    <div style="display:@(relatedItem.Checked ? "block" : "none")">
+                        @foreach (var choice in relatedItem.Choices)
+                        {
+                            <div class="checkbox sub-menu-two">
+                                <label><input type="checkbox" value=""> @choice.Name</label>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    }
+</div>
+
+
+@code {
+    int counter = 0;
+    private List<MenuItem> menuItems = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        menuItems = await Http.GetFromJsonAsync<List<MenuItem>>("sample-data/menu_items.json");
+    }
+
+    public void Check(string name)
+    {
+        bool isChecked = menuItems.Where(n => n.Name == name).FirstOrDefault().Checked;
+        if (isChecked)
+        {
+            menuItems.Where(n => n.Name == name).FirstOrDefault().Checked = false;
+        }
+        else
+            menuItems.Where(n => n.Name == name).FirstOrDefault().Checked = true;
+    }
+
+    public void CheckRelatedItem(string itemName, string relatedItemName)
+    {
+        bool isChecked = menuItems.Where(n => n.Name == itemName).FirstOrDefault().Related.Where(n => n.Name == relatedItemName).FirstOrDefault().Checked;
+        if (isChecked)
+        {
+            menuItems.Where(n => n.Name == itemName).FirstOrDefault().Related.Where(n => n.Name == relatedItemName).FirstOrDefault().Checked = false;
+        }
+        else
+            menuItems.Where(n => n.Name == itemName).FirstOrDefault().Related.Where(n => n.Name == relatedItemName).FirstOrDefault().Checked = true;
+    }
+}
